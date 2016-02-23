@@ -29,8 +29,8 @@ use work.trans_pkg.ALL;
 ------------------------------------------------
 entity Bit2Symbol is
 	port(	clk_250khz	: in STD_LOGIC; -- means to be 250khz
-			clk_62_5khz: in STD_LOGIC; -- 62.5 KHZ
 			reset	: in STD_LOGIC;
+			TX_enable	: in STD_LOGIC;
 			bit_in : in STD_LOGIC;
 			symbol_out : out INTEGER RANGE 0 TO 15); --integers range 0-15
 end Bit2Symbol;
@@ -45,33 +45,27 @@ signal i_bit_in	: std_logic;
 signal counter : integer range 0 to 3;
 
 begin
-symbol_out <= i_symbol_out; -- register my output
-i_bit_in <= bit_in; -- register my input
+symbol_out <= i_symbol_out;
+i_bit_in <= bit_in;
 
 symbol_creation: process(clk_250khz)
 begin
-	if reset = '1' then
-		temp_symbol <= "0000";
-		counter <= 0;
-	elsif rising_edge(clk_250khz) then
-		temp_symbol <= temp_symbol(2 downto 0) & i_bit_in;
-		if counter = 4 then
-			counter <= 1;
-		elsif counter = 1 then
-			i_symbol_out <= to_integer(unsigned(temp_symbol));
-			counter <= counter + 1;
-		else
-			counter <= counter + 1;
+	if rising_edge(clk_250khz) then
+		if reset = '1' then
+			temp_symbol <= "0000";
+			counter <= 0;
+		elsif TX_enable = '1' then
+			temp_symbol <= temp_symbol(2 downto 0) & i_bit_in;
+			if counter = 4 then
+				counter <= 1;
+			elsif counter = 1 then
+				i_symbol_out <= to_integer(unsigned(temp_symbol));
+				counter <= counter + 1;
+			else
+				counter <= counter + 1;
+			end if;
 		end if;
 	end if;
 end process;
-
---LUT: process(clk_62_5khz)
---begin
---	if rising_edge(clk_62_5khz) then
---		i_symbol_out <= to_integer(unsigned(temp_symbol));
---	end if;
---end process;
-
 end Behavioral;
 
