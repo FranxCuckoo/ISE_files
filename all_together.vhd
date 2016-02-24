@@ -19,7 +19,7 @@
 --	The PPDU frame is sent first the Preamble then the SFD etc 
 --	ending up with the FCS
 --	EACH CLK OUTPUTS ONE BIT OF THE PPDU Frame
---	Output symbol a clk_250_period after. Like the PPDU output
+--	Valid Output chip a clk_250_period + clk_2Mhz after.
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -60,7 +60,7 @@ architecture BEHAV of all_together is
 
 	signal output_chip : std_logic_vector(0 to tt-1);
 	signal i_bit_i : integer range 0 to tt-1;
-
+	-- whenevent is the same as tx_enable but one 250period later
 	signal whenevent :std_logic;
 	begin
 		-- Connect i_bit_ppdu with bit_ppdu
@@ -91,7 +91,7 @@ architecture BEHAV of all_together is
 					counter <= 0;
 					
 					whenevent <= '0';
-				else
+				elsif TX_enable = '1' then
 					i_bit_ppdu <= i_mux_out;
 					
 					temp_symbol <= temp_symbol(2 downto 0) & i_mux_out;
@@ -109,8 +109,8 @@ architecture BEHAV of all_together is
 					temp_register(m-1 downto 0) <= temp_register(m-2 downto 0) & '0';
 					
 					if TX_enable = '1' and (counter > 0)then
-					whenevent <= TX_enable;
-			end if;
+						whenevent <= TX_enable;
+					end if;
 				end if;
 			end if;
 		end process;
