@@ -27,7 +27,7 @@ entity Symbol2Bit is
 			bit_out		: out STD_LOGIC;
 			reset			: in STD_LOGIC;
 			clk_62_5khz	: in STD_LOGIC;
-			--clk_200Mhz	: in STD_LOGIC;
+			RX_enable	: in STD_LOGIC;
 			clk_250khz	: in STD_LOGIC
 			);
 end Symbol2Bit;
@@ -39,14 +39,6 @@ architecture Behavioral of Symbol2Bit is
 begin
 
 	temp_bits <= std_logic_vector(to_unsigned(symbol_in,4));
---	GET_SYMBOL: process(clk_62_5khz)
---	begin
---		if reset = '1' then
---			bit_out <= '0';
---		elsif rising_edge(clk_62_5khz) then
---			temp_bits <= std_logic_vector(to_unsigned(symbol_in,4));
---		end if;
---	end process;
 
 	BIT_OUTPUT: process(clk_250khz, temp_bits)
 	begin
@@ -54,7 +46,7 @@ begin
 			if reset = '1' then
 				pointer <= 0;
 				bit_out <= '0';
-			else
+			elsif RX_enable = '1' then
 				bit_out <= temp_bits(pointer);
 				if pointer = 0 then
 					pointer <= 3;
