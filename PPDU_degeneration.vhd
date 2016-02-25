@@ -35,86 +35,113 @@ entity PPDU_degenerator is
 			 );
 end PPDU_degenerator;
 
-architecture Behavioral of PPDU_degenerator is
+architecture BEHAV of PPDU_degenerator is
+	-- For saving the receiving frame
+	signal temp_frame	:	std_logic_vector(m-1 downto 0);-- := (others => '0');
 
--- For getting the whole frame
-signal temp_frame	:	std_logic_vector(m-1 downto 0) := (others => '0');
+	-- For getting the Preamble and SFD frame
+	signal preSFD_temp	:	std_logic_vector(39 downto 0);-- := (others => '0');
 
--- For getting the Preamble and SFD frame
-signal preSFD_temp	:	std_logic_vector(39 downto 0) := (others => '0'); --temp_frame(39 downto 0);
-signal SFD_en	: std_logic := '0';
+	signal SFD_en	: std_logic;
 
-signal fr_len_temp	: std_logic_vector(7 downto 0);
-signal fr_len_counter: integer range 0 to 7 := 0;
+	signal fr_len_temp	: std_logic_vector(7 downto 0);
+	signal fr_len_counter: integer range 0 to 7;-- := 0;
 
-signal PSDU_en	: std_logic := '0';
---signal PSDU_counter: std_logic_vector(5 downto 0 );
-signal PSDU_counter: integer range 0 to 127 := 0;
-signal PSDU_temp	: std_logic_vector(39 downto 0) := (others => '1');
+	signal PSDU_en	: std_logic; -- := '0';
+	--signal PSDU_counter: std_logic_vector(5 downto 0 );
+	signal PSDU_counter: integer range 0 to 127;
+	signal PSDU_temp	: std_logic_vector(39 downto 0);
 
-signal fr_len_int : integer range 0 to 127 := 0;
+	signal fr_len_int : integer range 0 to 127;-- := 0;
 
--- for outputting FCS result
-signal output_enable : std_logic := '0';
+	-- for outputting FCS result
+	signal output_enable : std_logic;
 
-signal fcs_check : std_logic_vector(tth-1 downto 0) := (others => '1');
+	signal fcs_check : std_logic_vector(tth-1 downto 0);-- := (others => '1');
 
 begin
 
 	preSFD_temp <= temp_frame(39 downto 0);
-	
---	check_frame <= '0' when fcs_check = x"0000";
 --	
---	with fcs_check select check_frame <=  '0' when x"0000",
---													  '1' when others;
-					  
+--	with preSFD_temp select
+--		SFD_en <= '1' when x"00000000e5",
+--				  '0' when others; -- here i could insert different values if others kind of packets
+--					  
 	process(clk_250khz)
 	begin
-		if rising_edge(clk_250khz) then
-		
+		if  rising_edge(clk_250khz) then
+	
 			-- The SFD is a field indicating the end of the SHR 
 			-- (of a O-QPSK PHY) and the start of the packet data.
+			-- For the specific packet that I sent
 			if preSFD_temp = x"00000000e5" then
 				SFD_en <= '1';
---				else
---					SFD_en <= '0';
+				fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
+				fr_len_counter <= fr_len_counter + 1;
 			end if;
 						
-			temp_frame <= temp_frame(m-2 downto 0) & ppdu_bit;
-		
-		end if;
-	end process;
-
-	process(SFD_en, clk_250khz)
-	variable frame_length : std_logic_vector(6 downto 0);
-	begin
-			if (SFD_en = '1' and clk_250khz = '1') then
-				fr_len_temp <= fr_len_temp(8-2 downto 0) & ppdu_bit;
+			if SFD_en = '1' then
+				fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
 				fr_len_counter <= fr_len_counter + 1;
-				if fr_len_counter = 8 then
+				if fr_len_counter = 8 then -- eprepe na en 8
 					PSDU_en <= '1';
-					
+				
+					PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+					PSDU_counter <= PSDU_counter + 1;
+
 					-- How many bits the PSDU is
 					fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
 				end if;
 			end if;
+			if PSDU_en = '1' then
+				PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+				PSDU_counter <= PSDU_counter + 1;
+			end if;
+
+			temp_frame <= temp_frame(m-2 downto 0) & ppdu_bit;
+--			if (temp_frame(m-2 downto 0) & ppdu_bit) = (x"00000000e5") then
+--				SFD_en <= '1'; why this doesnt work?
+--			end if;
+		end if;
 	end process;
+
+--	process(SFD_en, clk_250khz)
+--	begin 
+--		if rising_edge(clk_250khz) then
+--			if SFD_en = '1' then
+--				fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
+--				fr_len_counter <= fr_len_counter + 1;
+--				if fr_len_counter = 6 then -- eprepe na en 8
+--					PSDU_en <= '1';
+--				
+--					PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+--					PSDU_counter <= PSDU_counter + 1;
+--
+--					-- How many bits the PSDU is
+--					fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
+--				end if;
+--			end if;
+--			if PSDU_en = '1' then
+--				PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+--				PSDU_counter <= PSDU_counter + 1;
+--			end if;
+--		end if;
+--	end process;
 	
-	process(PSDU_en, clk_250khz)
-	variable frame_length : std_logic_vector(6 downto 0);
-	begin
-		
-		if (PSDU_en = '1' and clk_250khz = '1') then
-			
-			PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
-			PSDU_counter <= PSDU_counter + 1;
-		end if;			
-	end process;
+--	process(PSDU_en, clk_250khz)
+--	begin
+--		if rising_edge(clk_250khz) then
+--			if PSDU_en = '1' then
+--				PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+--				PSDU_counter <= PSDU_counter + 1;
+--			end if;
+--		end if;			
+--	end process;
 	
-	process(PSDU_counter, clk_200Mhz)
+	process(PSDU_counter, clk_250khz)
 	begin
 		-- When you get them 40 bits of PSDU
-		if rising_edge(clk_200Mhz) then --FALLING
+		if rising_edge(clk_250khz) then
 			if (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
 				fcs_check <= crc_func(PSDU_temp);
 				output_enable <= '1';
@@ -122,26 +149,136 @@ begin
 		end if;
 	end process;
 
-	process(clk_200Mhz, reset)
+	process(clk_250khz, reset)
 	begin
 		if reset = '1' then		 -- if reset then what??
-			check_frame <= '1';	-- If not commented out we drive the check_frame with two drivers
+			check_frame <= '0';	-- If not commented out we drive the check_frame with two drivers
 			received_frame <= '0';
-		elsif rising_edge(clk_200Mhz) then
+		elsif rising_edge(clk_250khz) then
 			if output_enable = '1' then
+				-- Inform that we received a packet
+				received_frame <= '1';
 				-- Check if our received frame is correct
 				if fcs_check = "0000000000000000" then --x"0000" then
 					-- OK
 					check_frame <= '1';
-					received_frame <= '1';
 				else
 					-- NOT OK
 					check_frame <= '0'; 
-					received_frame <= '1';
 				end if;
 			end if;
 		end if;
 	end process;
 
-end Behavioral;
+end BEHAV;
 
+--architecture Behavioral of PPDU_degenerator is
+--
+---- For getting the whole frame
+--signal temp_frame	:	std_logic_vector(m-1 downto 0) := (others => '0');
+--
+---- For getting the Preamble and SFD frame
+--signal preSFD_temp	:	std_logic_vector(39 downto 0) := (others => '0');
+--
+--signal SFD_en	: std_logic := '0';
+--
+--signal fr_len_temp	: std_logic_vector(7 downto 0);
+--signal fr_len_counter: integer range 0 to 7 := 0;
+--
+--signal PSDU_en	: std_logic := '0';
+----signal PSDU_counter: std_logic_vector(5 downto 0 );
+--signal PSDU_counter: integer range 0 to 127 := 0;
+--signal PSDU_temp	: std_logic_vector(39 downto 0);
+--
+--signal fr_len_int : integer range 0 to 127 := 0;
+--
+---- for outputting FCS result
+--signal output_enable : std_logic := '0';
+--
+--signal fcs_check : std_logic_vector(tth-1 downto 0) := (others => '1');
+--
+--begin
+--
+--	preSFD_temp <= temp_frame(39 downto 0);
+--	
+----	check_frame <= '0' when fcs_check = x"0000";
+----	
+----	with fcs_check select check_frame <=  '0' when x"0000",
+----													  '1' when others;
+--					  
+--	process(clk_250khz)
+--	begin
+--		if rising_edge(clk_250khz) then
+--		
+--			-- The SFD is a field indicating the end of the SHR 
+--			-- (of a O-QPSK PHY) and the start of the packet data.
+--			-- For the specific packet that I sent
+--			if preSFD_temp = x"00000000e5" then
+--				SFD_en <= '1';
+--			end if;
+--						
+--			temp_frame <= temp_frame(m-2 downto 0) & ppdu_bit;
+--		
+--		end if;
+--	end process;
+--
+--	process(SFD_en, clk_250khz)
+--		variable frame_length : std_logic_vector(6 downto 0);
+--	begin
+--			if (SFD_en = '1' and clk_250khz = '1') then
+--				fr_len_temp <= fr_len_temp(8-2 downto 0) & ppdu_bit;
+--				fr_len_counter <= fr_len_counter + 1;
+--				if fr_len_counter = 8 then
+--					PSDU_en <= '1';
+--					
+--					-- How many bits the PSDU is
+--					fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
+--				end if;
+--			end if;
+--	end process;
+--	
+--	process(PSDU_en, clk_250khz)
+--		variable frame_length : std_logic_vector(6 downto 0);
+--	begin
+--		
+--		if (PSDU_en = '1' and clk_250khz = '1') then
+--			
+--			PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
+--			PSDU_counter <= PSDU_counter + 1;
+--		end if;			
+--	end process;
+--	
+--	process(PSDU_counter, clk_200Mhz)
+--	begin
+--		-- When you get them 40 bits of PSDU
+--		if rising_edge(clk_200Mhz) then --FALLING
+--			if (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
+--				fcs_check <= crc_func(PSDU_temp);
+--				output_enable <= '1';
+--			end if;	
+--		end if;
+--	end process;
+--
+--	process(clk_200Mhz, reset)
+--	begin
+--		if reset = '1' then		 -- if reset then what??
+--			check_frame <= '1';	-- If not commented out we drive the check_frame with two drivers
+--			received_frame <= '0';
+--		elsif rising_edge(clk_200Mhz) then
+--			if output_enable = '1' then
+--				-- Check if our received frame is correct
+--				if fcs_check = "0000000000000000" then --x"0000" then
+--					-- OK
+--					check_frame <= '1';
+--					received_frame <= '1';
+--				else
+--					-- NOT OK
+--					check_frame <= '0'; 
+--					received_frame <= '1';
+--				end if;
+--			end if;
+--		end if;
+--	end process;
+--
+--end Behavioral;
+--
