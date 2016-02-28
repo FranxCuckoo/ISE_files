@@ -33,24 +33,27 @@ end Chip2Symbol;
 
 architecture Behavioral of Chip2Symbol is
 	signal temp_chip : std_logic_vector(tt-1 downto 0);
-
+	signal chip_buffer : std_logic_vector(tt-1 downto 0);
 begin
-	process(clk_2Mhz, reset, RX_enable)
+	GET_CHIP: process(clk_2Mhz, reset, RX_enable)
 		begin
-			if reset = '1' or RX_enable = '0' then
-			-- should go to idle state
-				temp_chip <= x"00000000"; -- in output exports 15 because I do not have a state which I would say this is nothing
-			elsif rising_edge(clk_2Mhz) then --FALLING
-				temp_chip <= temp_chip(tt-2 downto 0) & BitChip;
+			if rising_edge(clk_2Mhz) then
+				if reset = '1' then
+					-- should go to idle state
+					temp_chip <= x"00000000"; -- in output exports this because I do not have a state which I would say this is nothing
+				elsif RX_enable = '0' then
+					temp_chip <= x"00000000"; -- in output exports this because I do not have a state which I would say this is nothing
+				elsif RX_enable = '1' then
+					temp_chip <= temp_chip(tt-2 downto 0) & BitChip;
+				end if;
 			end if;
 		end process;
 		
-	process(clk_62_5khz) -- try when progress with only temp_chip in the sensitivity list
+	OUTPUT_SYMBOL: process(clk_62_5khz)
 		begin
 			if rising_edge(clk_62_5khz) then
 				symbol_out <= get_symbol(temp_chip);
 			end if;
 		end process;
-		
 end Behavioral;
 

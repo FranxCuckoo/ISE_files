@@ -35,9 +35,7 @@ entity Receiver_TopModule is
 				clk_250khz	: in  STD_LOGIC;
 				clk_62_5khz	: in  STD_LOGIC;
 				clk_2Mhz	: in  STD_LOGIC;
---				clk_1Mhz	: in  STD_LOGIC;
 				reset	:	in STD_LOGIC;
-		--		request_RX	: out STD_LOGIC_VECTOR (1 downto 0);
 				RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
 				ChipIn		: in STD_LOGIC;
 				received_frame : out STD_LOGIC;
@@ -46,10 +44,11 @@ entity Receiver_TopModule is
 end Receiver_TopModule;
 
 architecture Behavioral of Receiver_TopModule is
+--	constant D : integer := 23; -- Number of 2Mhz_periods that the TR delays
 	signal c2s_s2b : integer range 0 to 15;
 	signal b2ppdu	: std_logic;
-	signal delay_buffer : std_logic_vector(3 downto 0);
-	signal chipIn_delayed : std_logic;
+--	signal delay_buffer : std_logic_vector(D downto 0);
+--	signal ChipIn_delayed : std_logic;
 
 component Chip2Symbol is
 	port( BitChip	: in STD_LOGIC;
@@ -86,7 +85,7 @@ begin
 U_Chip2Symbol	:	Chip2Symbol port map(	clk_62_5khz => clk_62_5khz,
 														clk_2Mhz => clk_2Mhz,
 --														clk_200Mhz => clk_200Mhz,
-														BitChip => ChipIn, --chipIn_delayed,
+														BitChip => ChipIn, --_delayed,
 														reset => reset,
 														RX_enable => RX_enable,
 														symbol_out => c2s_s2b
@@ -110,13 +109,15 @@ U_PPDU_degenerator: PPDU_degenerator port map(	ppdu_bit => b2ppdu,
 
 --delay_buffer(0) <= ChipIn;
 --
---gen_delay: for i in 1 to 4 generate
+--gen_delay: for i in 1 to D generate
 --	delay: process(clk_2Mhz)
 --	begin
---		delay_buffer(i) <= delay_buffer(i-1);
+--		if rising_edge(clk_2Mhz) then
+--			delay_buffer(i) <= delay_buffer(i-1);
+--		end if;
 --	end process;
 --end generate;
 --
---chipIn_delayed <= delay_buffer(4);
+--ChipIn_delayed <= delay_buffer(D);
 
 end Behavioral;
