@@ -31,7 +31,6 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity Receiver_TopModule is
 		Port ( 
-				clk_200Mhz	: in  STD_LOGIC;
 				clk_250khz	: in  STD_LOGIC;
 				clk_62_5khz	: in  STD_LOGIC;
 				clk_2Mhz	: in  STD_LOGIC;
@@ -44,15 +43,16 @@ entity Receiver_TopModule is
 end Receiver_TopModule;
 
 architecture Behavioral of Receiver_TopModule is
---	constant D : integer := 23; -- Number of 2Mhz_periods that the TR delays
-	signal c2s_s2b : integer range 0 to 15;
-	signal b2ppdu	: std_logic;
+--	constant D : integer := 1; -- Number of 2Mhz_periods that the TR delays
 --	signal delay_buffer : std_logic_vector(D downto 0);
 --	signal ChipIn_delayed : std_logic;
+	
+	signal c2s_s2b : integer range 0 to 15;
+	signal b2ppdu	: std_logic;
 
 component Chip2Symbol is
 	port( BitChip	: in STD_LOGIC;
-			RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
+			RX_enable  	: in  STD_LOGIC;
 			symbol_out	: out integer range 0 to 15;
 			reset	:	in STD_LOGIC;
 			clk_2Mhz	: in STD_LOGIC; -- in 
@@ -73,10 +73,9 @@ component Symbol2Bit is
 component PPDU_degenerator is
     port( ppdu_bit	: in STD_LOGIC;
 			 reset		:	in STD_LOGIC;
- 			 clk_200Mhz	: in STD_LOGIC; -- in
 			 clk_250khz	: in STD_LOGIC; --in
 			 received_frame: out STD_LOGIC;
-			 check_frame: out STD_LOGIC --if its 0 its ok, if its 1 is wrong
+			 check_frame: out STD_LOGIC --if its 1 its ok, if its 0 is wrong
 			 );
 end component;
 
@@ -84,7 +83,6 @@ begin
 
 U_Chip2Symbol	:	Chip2Symbol port map(	clk_62_5khz => clk_62_5khz,
 														clk_2Mhz => clk_2Mhz,
---														clk_200Mhz => clk_200Mhz,
 														BitChip => ChipIn, --_delayed,
 														reset => reset,
 														RX_enable => RX_enable,
@@ -101,7 +99,6 @@ U_Symbol2Bit	: Symbol2Bit port map(	clk_62_5khz => clk_62_5khz,
 														
 U_PPDU_degenerator: PPDU_degenerator port map(	ppdu_bit => b2ppdu,
 																clk_250khz => clk_250khz,
-																clk_200Mhz => clk_200Mhz,
 																reset => reset,
 																received_frame => received_frame,
 																check_frame => Frame_OK

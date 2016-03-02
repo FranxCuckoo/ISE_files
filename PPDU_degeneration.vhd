@@ -28,7 +28,6 @@ use work.receiver_pkg.all;
 entity PPDU_degenerator is
     port( ppdu_bit	: in STD_LOGIC;
 			 clk_250khz	: in STD_LOGIC; -- in
-			 clk_200Mhz	: in STD_LOGIC; -- in
 			 reset		: in STD_LOGIC;
 			 received_frame: out STD_LOGIC;
 			 check_frame: out STD_LOGIC -- if its 0 its ok, if its 1 is wrong or not ready

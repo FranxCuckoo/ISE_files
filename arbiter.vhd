@@ -27,7 +27,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity arbiter is
     port(  
-		clk_200Mhz	: in std_logic;
+		clk_2Mhz	: in std_logic;
 		reset			: in std_logic;
 		FrReceived0	: in std_logic;		
 		FrReceived1	: in std_logic;
@@ -50,9 +50,9 @@ architecture behavioral of arbiter is
     begin
 		
 --		next_user: process(reset, TRX_request)  --(clk_200Mhz, reset)
-		next_user: process(clk_200Mhz)
+		next_user: process(clk_2Mhz)
 		begin
-		if rising_edge(clk_200Mhz) then
+		if rising_edge(clk_2Mhz) then
 			if reset = '1' then
 				 state <= IDLE;
 				 last_user <= '0';

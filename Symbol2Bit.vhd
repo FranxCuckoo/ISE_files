@@ -23,18 +23,19 @@ use IEEE.NUMERIC_STD.ALL;
 use work.receiver_pkg.all;
 
 entity Symbol2Bit is
-	port( 	symbol_in	: in INTEGER RANGE 0 TO 15;
-			bit_out		: out STD_LOGIC;
+	port(	clk_62_5khz	: in STD_LOGIC;
+			clk_250khz	: in STD_LOGIC;
 			reset			: in STD_LOGIC;
-			clk_62_5khz	: in STD_LOGIC;
 			RX_enable	: in STD_LOGIC;
-			clk_250khz	: in STD_LOGIC
+			
+			symbol_in	: in INTEGER RANGE 0 TO 15;
+			bit_out		: out STD_LOGIC			
 			);
 end Symbol2Bit;
 
 architecture Behavioral of Symbol2Bit is
 	signal temp_bits : std_logic_vector(3 downto 0);
-	signal pointer : integer range 0 to 3 := 3;
+	signal pointer : integer range 3 downto 0;
 
 begin
 
@@ -44,7 +45,7 @@ begin
 	begin
 		if rising_edge(clk_250khz) then
 			if reset = '1' then
-				pointer <= 0;
+				pointer <= 3;
 				bit_out <= '0';
 			elsif RX_enable = '1' then
 				bit_out <= temp_bits(pointer);

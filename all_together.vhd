@@ -31,8 +31,9 @@ entity all_together is
 			clk_2Mhz	: in STD_LOGIC;  -- 2mhz
 			reset		: in STD_LOGIC; -- active when 1
 			TX_enable	: in STD_LOGIC;	-- high enable shifting/outputting a bit at a time
-			chip_out	: out std_logic;
-			bit_ppdu 	: out  STD_LOGIC); -- serial out
+			
+			chip_out	: out std_logic
+			);
 end all_together;
 
 architecture BEHAV of all_together is
@@ -46,8 +47,8 @@ architecture BEHAV of all_together is
 	signal i_mux_out : std_logic;
 	
 	-- Register the output
-	signal i_bit_ppdu : std_logic;
-	signal i_bit_ppdu_delayed : std_logic_vector(23 downto 0);
+--	signal i_bit_ppdu : std_logic;
+--	signal i_bit_ppdu_delayed : std_logic_vector(23 downto 0);
 
 	-- PPDU
 	signal PPDU : std_logic_vector(m-1 downto 0); -- := (others => 'U');
@@ -56,17 +57,27 @@ architecture BEHAV of all_together is
 	signal i_symbol_out : integer range 0 to 15;
 	signal counter : integer range 0 to 3;
 
-	signal i_symbol_in : integer range 0 to 15;
+--	signal i_symbol_in : integer range 0 to 15;
 	signal i_chip_out : std_logic;
+--	signal i_TX_enable : std_logic;
 --	signal i_chip_out_delayed : std_logic_vector(23 downto 0);
 
 	signal output_chip : std_logic_vector(0 to tt-1);
 	signal i_bit_i : integer range 0 to tt-1;
-	-- whenevent is the same as tx_enable but one 250period later
+	-- whenevent is the same as TX_enable but one 250period later
 	signal whenevent :std_logic;
 begin
 	-- Connect i_bit_ppdu with bit_ppdu
-	bit_ppdu <= i_bit_ppdu;
+--	bit_ppdu <= i_bit_ppdu;
+
+--		TX_enable <= TX_enable;
+	-- Register the enable input sig
+--	reg: process(clk_250khz)
+--	begin
+--		if rising_edge(clk_250khz) then
+--			i_TX_enable <= TX_enable;
+--		end if;
+--	end process;
 	
 	-- Connect i_bit_ppdu with bit_ppdu
 	chip_out <= i_chip_out; --_delayed;
@@ -101,15 +112,16 @@ begin
 	begin
 		if rising_edge(clk_250khz) then
 			if reset = '1' then
-				i_bit_ppdu <= '0';
+--				i_bit_ppdu <= '0';
 				temp_register <= PPDU;
 					
 				temp_symbol <= "0000";
 				counter <= 0;
+				i_mux_in <= '0';
 				
 				whenevent <= '0';
 			elsif TX_enable = '1' then
-				i_bit_ppdu <= i_mux_out;
+--				i_bit_ppdu <= i_mux_out;
 				
 				temp_symbol <= temp_symbol(2 downto 0) & i_mux_out;
 				if counter = 4 then
@@ -128,6 +140,12 @@ begin
 				if TX_enable = '1' and (counter > 0)then
 					whenevent <= TX_enable;
 				end if;
+			else 
+			-- otherwise, there is an undiefined value on imux in until
+			-- the TX_enable comes from the arbiter
+				temp_symbol <= "0000";
+				counter <= 0;
+				i_mux_in <= '0';
 			end if;
 		end if;
 	end process;
