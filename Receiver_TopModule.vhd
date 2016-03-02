@@ -72,11 +72,12 @@ component Symbol2Bit is
 	
 component PPDU_degenerator is
     port( ppdu_bit	: in STD_LOGIC;
-			 reset		:	in STD_LOGIC;
-			 clk_250khz	: in STD_LOGIC; --in
-			 received_frame: out STD_LOGIC;
-			 check_frame: out STD_LOGIC --if its 1 its ok, if its 0 is wrong
-			 );
+		  reset		:	in STD_LOGIC;
+	      clk_250khz	: in STD_LOGIC; --in
+		  RX_enable : in std_logic;
+	      received_frame: out STD_LOGIC;
+		  check_frame: out STD_LOGIC --if its 1 its ok, if its 0 is wrong
+		 );
 end component;
 
 begin
@@ -101,6 +102,7 @@ U_PPDU_degenerator: PPDU_degenerator port map(	ppdu_bit => b2ppdu,
 																clk_250khz => clk_250khz,
 																reset => reset,
 																received_frame => received_frame,
+																RX_enable => RX_enable, 	
 																check_frame => Frame_OK
 																);
 

@@ -45,7 +45,7 @@ architecture behavioral of arbiter is
     signal last_user: std_logic;
 	 
 --    signal request_sig: std_logic_vector(1 downto 0);
-    signal grant_sig: std_logic_vector(1 downto 0);
+--    signal grant_sig: std_logic_vector(1 downto 0);
     
     begin
 		
@@ -59,25 +59,36 @@ architecture behavioral of arbiter is
 			else
 				case state is
 					when IDLE =>	if TRX_request = "01" then
+								--		if last_user = '0' then 
+								--			state <= IDLE;
+								--			last_user <= '0';
+								--		-- or create an idle user state. so basically we have one period
+								--		-- dead so the user0 can sent again.
+								--		else
 											state <=  USER0;
 											last_user <=  '0';
-										elsif TRX_request = "10" then
+							--			end if;
+									elsif TRX_request = "10" then
+										state <=  USER1;
+										last_user <=  '1'; 
+									elsif TRX_request = "11" then
+										if last_user = '0' then
 											state <=  USER1;
-											last_user <=  '1'; 
-										elsif TRX_request = "11" then
-											if last_user = '0' then
-												state <=  USER1;
-												last_user <=  '1';
-											else 
-												state <=  USER0;
-												last_user <=  '0';
-											end if;  
-										end if;
+											last_user <=  '1';
+										else 
+											state <=  USER0;
+											last_user <=  '0';
+										end if;  
+									end if;
 					-- if were at user1 and comes 11 then it goes to user0, 
 					-- if then comes 01 it stays to user0 again for second time!!!
-					when USER0 =>	if  FrReceived1 = '1' then
-											state <= IDLE;
-											last_user <= '0';
+					when USER0 =>	if FrReceived1 = '1' then		
+										if TRX_request = "01" then
+											if TRX_request'event then
+												state <= IDLE;
+												last_user <= '0';
+											end if;
+										end if;
 --										elsif FrReceived1 = '0' then
 --											if TRX_request = "00" then
 --												state <=   IDLE;
@@ -85,7 +96,7 @@ architecture behavioral of arbiter is
 --												state <=  USER1;
 --												last_user <=  '1'; 
 --											end if;
-										end if;
+									end if;
 
 					when USER1 =>	if  FrReceived0 = '1' then
 											state <= IDLE;
