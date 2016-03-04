@@ -26,6 +26,7 @@ entity Chip2Symbol is
 			RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
 			symbol_out	: out integer range 0 to 15;
 			reset	:	in STD_LOGIC;
+--			clk_250Mhz	: in STD_LOGIC; -- in 
 			clk_2Mhz	: in STD_LOGIC; -- in 
 			clk_62_5khz	: in STD_LOGIC --out
 			);
@@ -53,14 +54,14 @@ begin
 	GET_CHIP: process(clk_2Mhz, reset, RX_enable)
 		begin
 			if rising_edge(clk_2Mhz) then
-				if reset = '1' then
+				if reset = '1' or RX_enable = '0' then
 					-- should go to idle state
 					chip_counter <= 0;
 					-- in output exports this because I do not have a state which I would say this is nothing
 					temp_chip <= x"00000000";
-				elsif RX_enable = '0' then
-					temp_chip <= x"00000000";
-					chip_counter <= 0;
+--				elsif RX_enable = '0' then
+--					temp_chip <= x"00000000";
+--					chip_counter <= 0;
 				elsif RX_enable = '1' then
 					-- Buffer for 31 + received chip
 					temp_chip <= temp_chip(tt-2 downto 0) & i_BitChip;

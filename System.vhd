@@ -53,7 +53,7 @@ architecture Behavioral of System is
 	end component;
 
 	component arbiter is
-		 port(clk_2Mhz		: in std_logic;
+		 port(clk_250khz		: in std_logic;
 			  reset				: in std_logic;
 			  FrReceived0		: in std_logic;		
 			  FrReceived1		: in std_logic;
@@ -94,7 +94,7 @@ begin
 									reset => reset,
 									FrReceived0 => received_frame0,
 									FrReceived1 => received_frame1,
-									clk_2Mhz => clk_2Mhz,
+									clk_250khz => clk_250khz,
 									TX0_enable => TX0_en,
 									RX0_enable => RX0_en,
 									TX1_enable => TX1_en,
