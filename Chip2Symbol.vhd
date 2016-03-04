@@ -22,7 +22,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use work.receiver_pkg.all;
 
 entity Chip2Symbol is
-	port( 	BitChip	: in STD_LOGIC;
+	port( BitChip	: in STD_LOGIC;
 			RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
 			symbol_out	: out integer range 0 to 15;
 			reset	:	in STD_LOGIC;
@@ -79,7 +79,7 @@ begin
 		begin
 			-- Every 32 chips you take translate them in a symbol
 			-- when counter = 0 cause when in use this module in the next level it has a ff delay
-			if clk_62_5khz = '1' and chip_counter = 0 then
+			if chip_counter = 0 then -- and clk_62_5khz = '1'
 				symbol_out <= get_symbol(temp_chip);
 			end if;
 		end process;

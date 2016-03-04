@@ -28,12 +28,12 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity all_together is
     Port (  clk_250khz	: in STD_LOGIC; -- means to be 250khz
-			clk_2Mhz	: in STD_LOGIC;  -- 2mhz
-			reset		: in STD_LOGIC; -- active when 1
-			TX_enable	: in STD_LOGIC;	-- high enable shifting/outputting a bit at a time
-			
-			chip_out	: out std_logic
-			);
+				clk_2Mhz	: in STD_LOGIC;  -- 2mhz
+				reset		: in STD_LOGIC; -- active when 1
+				TX_enable	: in STD_LOGIC;	-- high enable shifting/outputting a bit at a time
+				
+				chip_out	: out std_logic
+				);
 end all_together;
 
 architecture BEHAV of all_together is
@@ -124,6 +124,7 @@ begin
 --				i_bit_ppdu <= i_mux_out;
 				
 				temp_symbol <= temp_symbol(2 downto 0) & i_mux_out;
+				
 				if counter = 4 then
 					counter <= 1;
 				elsif counter = 1 then
@@ -138,14 +139,18 @@ begin
 				temp_register(m-1 downto 0) <= temp_register(m-2 downto 0) & '0';
 				
 				if TX_enable = '1' and (counter > 0)then
-					whenevent <= TX_enable;
+					whenevent <= TX_enable; --'1'
 				end if;
 			else 
 			-- otherwise, there is an undiefined value on imux in until
 			-- the TX_enable comes from the arbiter
+				temp_register <= PPDU;
 				temp_symbol <= "0000";
 				counter <= 0;
 				i_mux_in <= '0';
+				
+				-- if TX_enable = '0' and (counter > 0)then
+				whenevent <= '0';
 			end if;
 		end if;
 	end process;
@@ -171,7 +176,7 @@ begin
 	CHIP_OUTPUT: process(clk_2Mhz, counter)
 		variable bit_i : integer range 0 to tt-1;
 	begin
-		if reset = '1' then
+		if reset = '1' or TX_enable = '0' then
 			i_chip_out <= '0';
 			bit_i := 0;
 		elsif rising_edge(clk_2Mhz) then
@@ -184,6 +189,8 @@ begin
 				else
 					bit_i := bit_i + 1;
 				end if;
+			else
+				i_chip_out <= '0';
 			end if;
 		end if;
 	end process;

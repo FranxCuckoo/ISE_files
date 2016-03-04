@@ -35,7 +35,8 @@ entity Receiver_TopModule is
 				clk_62_5khz	: in  STD_LOGIC;
 				clk_2Mhz	: in  STD_LOGIC;
 				reset	:	in STD_LOGIC;
-				RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
+				RX_enable  	: in  STD_LOGIC;
+				RX_enable_delayed  	: in  STD_LOGIC;
 				ChipIn		: in STD_LOGIC;
 				received_frame : out STD_LOGIC;
 				Frame_OK	: out STD_LOGIC
@@ -52,7 +53,7 @@ architecture Behavioral of Receiver_TopModule is
 
 component Chip2Symbol is
 	port( BitChip	: in STD_LOGIC;
-			RX_enable  	: in  STD_LOGIC;
+			RX_enable 	: in  STD_LOGIC;
 			symbol_out	: out integer range 0 to 15;
 			reset	:	in STD_LOGIC;
 			clk_2Mhz	: in STD_LOGIC; -- in 
@@ -72,11 +73,12 @@ component Symbol2Bit is
 	
 component PPDU_degenerator is
     port( ppdu_bit	: in STD_LOGIC;
-		  reset		:	in STD_LOGIC;
-	      clk_250khz	: in STD_LOGIC; --in
-		  RX_enable : in std_logic;
-	      received_frame: out STD_LOGIC;
-		  check_frame: out STD_LOGIC --if its 1 its ok, if its 0 is wrong
+			 reset		:	in STD_LOGIC;
+			 clk_250khz	: in STD_LOGIC;
+			 RX_enable : in std_logic;
+--			 RX_enable_delayed : in std_logic;
+			 received_frame: out STD_LOGIC;
+			 check_frame: out STD_LOGIC --if its 1 its ok, if its 0 is wrong
 		 );
 end component;
 
@@ -86,13 +88,13 @@ U_Chip2Symbol	:	Chip2Symbol port map(	clk_62_5khz => clk_62_5khz,
 														clk_2Mhz => clk_2Mhz,
 														BitChip => ChipIn, --_delayed,
 														reset => reset,
-														RX_enable => RX_enable,
+														RX_enable => RX_enable_delayed,
 														symbol_out => c2s_s2b
 														);
 														
 U_Symbol2Bit	: Symbol2Bit port map(	clk_62_5khz => clk_62_5khz,
 													clk_250khz => clk_250khz,
-													RX_enable => RX_enable,
+													RX_enable => RX_enable_delayed,
 													reset => reset,
 													symbol_in => c2s_s2b,
 													bit_out => b2ppdu
@@ -103,6 +105,7 @@ U_PPDU_degenerator: PPDU_degenerator port map(	ppdu_bit => b2ppdu,
 																reset => reset,
 																received_frame => received_frame,
 																RX_enable => RX_enable, 	
+--																RX_enable_delayed => RX_enable_delayed, 	
 																check_frame => Frame_OK
 																);
 

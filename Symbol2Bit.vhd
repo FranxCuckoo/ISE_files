@@ -44,7 +44,7 @@ begin
 	BIT_OUTPUT: process(clk_250khz, temp_bits)
 	begin
 		if rising_edge(clk_250khz) then
-			if reset = '1' then
+			if reset = '1' or RX_enable = '0' then
 				pointer <= 3;
 				bit_out <= '0';
 			elsif RX_enable = '1' then

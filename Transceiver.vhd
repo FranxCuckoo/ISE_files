@@ -65,6 +65,7 @@ architecture Behavioral of Transceiver is
 				clk_2Mhz	: in  STD_LOGIC;
 				reset	:	in STD_LOGIC;
 				RX_enable 	: in  STD_LOGIC;
+				RX_enable_delayed 	: in  STD_LOGIC;
 				ChipIn		: in STD_LOGIC;
 				received_frame : out STD_LOGIC;
 				Frame_OK	: out STD_LOGIC
@@ -83,7 +84,8 @@ begin
 	U_Receiver: Receiver_TopModule port map( ChipIn => data_bus_delayed,
 											 Frame_OK => Frame_Verif,
 											 received_frame => received_frame,
-											 RX_enable => RX_enable_delayed,
+											 RX_enable_delayed => RX_enable_delayed,
+											 RX_enable => RX_enable,
 											 reset => reset,
 											 clk_250khz => clk_250khz,
 											 clk_62_5khz => clk_62_5khz,

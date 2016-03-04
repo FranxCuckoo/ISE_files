@@ -28,7 +28,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity arbiter is
     port(  
 		clk_2Mhz	: in std_logic;
-		reset			: in std_logic;
+		reset		: in std_logic;
 		FrReceived0	: in std_logic;		
 		FrReceived1	: in std_logic;
 		TRX_request	: in std_logic_vector(1 downto 0);
@@ -75,7 +75,7 @@ architecture behavioral of arbiter is
 									end if;
 					-- if were at user1 and comes 11 then it goes to user0, 
 					-- if then comes 01 it stays to user0 again for second time!!!
-					when USER0 =>	if (TRX_request = "01" and FrReceived1 = '1') then
+					when USER0 =>	if (TRX_request = "01" and FrReceived1 = '1') then --priority
 										state <= USER0;
 										last_user <= '0';
 									elsif FrReceived1 = '1' then 
@@ -86,6 +86,7 @@ architecture behavioral of arbiter is
 											state <=  IDLE;
 											last_user <=  '0';
 										end if;  
+									-- take note that if TRX_request = "01" and FrReceived1 = '0' den kani tpt
 									end if;
 --										elsif FrReceived1 = '0' then
 --											if TRX_request = "00" then
@@ -95,9 +96,18 @@ architecture behavioral of arbiter is
 --												last_user <=  '1'; 
 --											end if;
 
-					when USER1 =>	if  FrReceived0 = '1' then
-											state <= IDLE;
-											last_user <= '1';
+					when USER1 =>	if (TRX_request = "10" and FrReceived0 = '1') then
+										state <= USER1;
+										last_user <= '1';
+									elsif FrReceived0 = '1' then 
+										if TRX_request = "01" or TRX_request = "11" then
+											state <=  USER0;
+											last_user <=  '0'; 
+										elsif TRX_request = "00" then 
+											state <=  IDLE;
+											last_user <=  '1';
+										end if;  
+									end if;
 --										elsif FrReceived0 = '0' then
 --											if TRX_request = "00" then
 --												state <= IDLE;
@@ -105,7 +115,6 @@ architecture behavioral of arbiter is
 --												state <= USER0;
 --												last_user <= '0'; 
 --											end if;
-										end if;
 				end case;   
 			end if;
 		end if;
