@@ -26,9 +26,7 @@ entity Chip2Symbol is
 			RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
 			symbol_out	: out integer range 0 to 15;
 			reset	:	in STD_LOGIC;
---			clk_250Mhz	: in STD_LOGIC; -- in 
-			clk_2Mhz	: in STD_LOGIC; -- in 
-			clk_62_5khz	: in STD_LOGIC --out
+			clk_2Mhz	: in STD_LOGIC
 			);
 end Chip2Symbol;
 
@@ -40,16 +38,12 @@ architecture Behavioral of Chip2Symbol is
 	
 	-- Internal sig, register my input
 	signal i_BitChip : std_logic;
+
+	-- Internal signal
+	signal i_symbol_out : integer range 0 to 15;
+
 begin
 	i_BitChip <= BitChip;
--- Register my input -- DOES NOT MAKE A DIFF
--- Uncomment below only to check the Receiver_TopModule
---	REG_INPUT: process(clk_2Mhz)
---	begin
---		if rising_edge(clk_2Mhz) then
---			i_BitChip <= BitChip;
---		end if;
---	end process;
 
 	GET_CHIP: process(clk_2Mhz, reset, RX_enable)
 		begin
@@ -59,9 +53,6 @@ begin
 					chip_counter <= 0;
 					-- in output exports this because I do not have a state which I would say this is nothing
 					temp_chip <= x"00000000";
---				elsif RX_enable = '0' then
---					temp_chip <= x"00000000";
---					chip_counter <= 0;
 				elsif RX_enable = '1' then
 					-- Buffer for 31 + received chip
 					temp_chip <= temp_chip(tt-2 downto 0) & i_BitChip;
@@ -75,14 +66,25 @@ begin
 				end if;
 			end if;
 		end process;
-		
-	OUTPUT_SYMBOL: process(clk_62_5khz, temp_chip)
+
+		symbol_out <= i_symbol_out;
+
+		OUTPUT_SYMBOL: process(temp_chip, chip_counter, i_symbol_out)
+	   	--clk_62_5khz, was in the sensitivity list removed on 5/03 cause ise said it was not used.
 		begin
 			-- Every 32 chips you take translate them in a symbol
 			-- when counter = 0 cause when in use this module in the next level it has a ff delay
-			if chip_counter = 0 then -- and clk_62_5khz = '1'
-				symbol_out <= get_symbol(temp_chip);
-			end if;
+--			if chip_counter = 0 then -- and clk_62_5khz = '1'
+--				i_symbol_out <= get_symbol(temp_chip);
+--			else
+--				i_symbol_out <= i_symbol_out;
+--			end if;
+
+			case chip_counter is
+				when 0 => i_symbol_out <= get_symbol(temp_chip);
+				when others => i_symbol_out <= i_symbol_out;
+			end case;
+
 		end process;
 end Behavioral;
 

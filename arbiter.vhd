@@ -43,13 +43,9 @@ architecture behavioral of arbiter is
     type state_type is (IDLE, USER0, USER1);
     signal state: state_type;
     signal last_user: std_logic;
-	 
---    signal request_sig: std_logic_vector(1 downto 0);
---    signal grant_sig: std_logic_vector(1 downto 0);
     
     begin
 		
---		next_user: process(reset, TRX_request)  --(clk_200Mhz, reset)
 		next_user: process(clk_250khz)
 		begin
 		if rising_edge(clk_250khz) then
@@ -88,13 +84,6 @@ architecture behavioral of arbiter is
 										end if;  
 									-- take note that if TRX_request = "01" and FrReceived1 = '0' den kani tpt
 									end if;
---										elsif FrReceived1 = '0' then
---											if TRX_request = "00" then
---												state <=   IDLE;
---											elsif TRX_request = "10" or TRX_request = "11" then
---												state <=  USER1;
---												last_user <=  '1'; 
---											end if;
 
 					when USER1 =>	if (TRX_request = "10" and FrReceived0 = '1') then
 										state <= USER1;
@@ -108,19 +97,12 @@ architecture behavioral of arbiter is
 											last_user <=  '1';
 										end if;  
 									end if;
---										elsif FrReceived0 = '0' then
---											if TRX_request = "00" then
---												state <= IDLE;
---											elsif TRX_request = "01" or TRX_request = "11" then
---												state <= USER0;
---												last_user <= '0'; 
---											end if;
 				end case;   
 			end if;
 		end if;
 		end process;
 
-		output:process(state)
+		output_en_sig: process(state)
 		begin
 			case state is
 				 when IDLE =>	TX1_enable <= '0';	--	Request	Reset	TX1 TX0 RX1 RX0

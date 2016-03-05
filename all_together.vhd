@@ -46,10 +46,6 @@ architecture BEHAV of all_together is
 	-- internal signal that has the value of mux output
 	signal i_mux_out : std_logic;
 	
-	-- Register the output
---	signal i_bit_ppdu : std_logic;
---	signal i_bit_ppdu_delayed : std_logic_vector(23 downto 0);
-
 	-- PPDU
 	signal PPDU : std_logic_vector(m-1 downto 0); -- := (others => 'U');
 	
@@ -57,45 +53,18 @@ architecture BEHAV of all_together is
 	signal i_symbol_out : integer range 0 to 15;
 	signal counter : integer range 0 to 3;
 
---	signal i_symbol_in : integer range 0 to 15;
 	signal i_chip_out : std_logic;
---	signal i_TX_enable : std_logic;
---	signal i_chip_out_delayed : std_logic_vector(23 downto 0);
 
 	signal output_chip : std_logic_vector(0 to tt-1);
-	signal i_bit_i : integer range 0 to tt-1;
+	-- To watch the bit_i variable
+	--signal i_bit_i : integer range 0 to tt-1;
+	
 	-- whenevent is the same as TX_enable but one 250period later
 	signal whenevent :std_logic;
 begin
-	-- Connect i_bit_ppdu with bit_ppdu
---	bit_ppdu <= i_bit_ppdu;
 
---		TX_enable <= TX_enable;
-	-- Register the enable input sig
---	reg: process(clk_250khz)
---	begin
---		if rising_edge(clk_250khz) then
---			i_TX_enable <= TX_enable;
---		end if;
---	end process;
-	
 	-- Connect i_bit_ppdu with bit_ppdu
 	chip_out <= i_chip_out; --_delayed;
-	--------------------------------------
-	-- Delay the output
---	i_chip_out_delayed(0) <= i_chip_out;
---	
---	gen_delay: for i in 1 to 23 generate
---		delay: process(clk_2Mhz)
---		begin
---			if rising_edge(clk_2Mhz) then
---				i_chip_out_delayed(i) <= i_chip_out_delayed(i-1);
---			end if;
---		end process;
---	end generate;
---
---	chip_out <= i_chip_out_delayed(23);
-	-------------------------------------
 	
 	-- Creating MAC frame and PPDU frame
 	PPDU <= PPDU_func(MPDU_frame);
@@ -112,7 +81,6 @@ begin
 	begin
 		if rising_edge(clk_250khz) then
 			if reset = '1' then
---				i_bit_ppdu <= '0';
 				temp_register <= PPDU;
 					
 				temp_symbol <= "0000";
@@ -121,7 +89,6 @@ begin
 				
 				whenevent <= '0';
 			elsif TX_enable = '1' then
---				i_bit_ppdu <= i_mux_out;
 				
 				temp_symbol <= temp_symbol(2 downto 0) & i_mux_out;
 				
@@ -173,7 +140,7 @@ begin
 					   "10010110000001110111101110001100" when 14,
 					   "11001001011000000111011110111000" when 15;
 						
-	CHIP_OUTPUT: process(clk_2Mhz, counter)
+	CHIP_OUTPUT: process(clk_2Mhz, counter, reset, TX_enable)
 		variable bit_i : integer range 0 to tt-1;
 	begin
 		if reset = '1' or TX_enable = '0' then
@@ -183,7 +150,7 @@ begin
 			if whenevent = '1' then
 				i_chip_out <= output_chip(bit_i);
 
-				i_bit_i <= bit_i;	
+				--i_bit_i <= bit_i;	
 				if bit_i = tt-1 then
 					bit_i := 0;
 				else

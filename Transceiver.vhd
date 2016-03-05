@@ -22,12 +22,11 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity Transceiver is
     Port ( clk_250khz	: in  STD_LOGIC;
-           clk_62_5khz	: in  STD_LOGIC;
            clk_2Mhz		: in  STD_LOGIC;
 		   reset		: in  STD_LOGIC;
-			TX_enable 	: in  STD_LOGIC;
+		   TX_enable 	: in  STD_LOGIC;
 		   RX_enable	: in  STD_LOGIC;
-			bitIn_rx 	: in  STD_LOGIC;
+		   bitIn_rx 	: in  STD_LOGIC;
 
 		   bitOut_tx 	: out STD_LOGIC;
 		   received_frame : out STD_LOGIC;
@@ -51,9 +50,9 @@ architecture Behavioral of Transceiver is
 	component all_together is
 		port ( 	
 				clk_250khz	: in STD_LOGIC;
-				clk_2Mhz		: in STD_LOGIC;
+				clk_2Mhz	: in STD_LOGIC;
 				TX_enable 	: in  STD_LOGIC;
-				reset			: in STD_LOGIC;
+				reset		: in STD_LOGIC;
 				chip_out	: out std_logic
 				);
 	end component;
@@ -61,9 +60,8 @@ architecture Behavioral of Transceiver is
 	component Receiver_TopModule is
 		Port ( 
 				clk_250khz	: in  STD_LOGIC;
-				clk_62_5khz	: in  STD_LOGIC;
 				clk_2Mhz	: in  STD_LOGIC;
-				reset	:	in STD_LOGIC;
+				reset		:	in STD_LOGIC;
 				RX_enable 	: in  STD_LOGIC;
 				RX_enable_delayed 	: in  STD_LOGIC;
 				ChipIn		: in STD_LOGIC;
@@ -88,16 +86,16 @@ begin
 											 RX_enable => RX_enable,
 											 reset => reset,
 											 clk_250khz => clk_250khz,
-											 clk_62_5khz => clk_62_5khz,
 											 clk_2Mhz => clk_2Mhz
 				 						 );
 
 -- Creation of a delay until the next rising edge of clks
+-- according to the time that my TX module delays to output the packet.
 delay_buffer_en(0) <= RX_enable;
 delay_buffer_chip(0) <= data_bus;
 
 gen_delay_en: for i in 1 to D_en generate
-	delay: process(clk_2Mhz)
+	delay_enable: process(clk_2Mhz)
 	begin
 		if rising_edge(clk_2Mhz) then
 			delay_buffer_en(i) <= delay_buffer_en(i-1);
@@ -106,7 +104,7 @@ gen_delay_en: for i in 1 to D_en generate
 end generate;
 
 gen_delay_chip: for i in 1 to D_chip generate
-	delay: process(clk_2Mhz)
+	delay_chip: process(clk_2Mhz)
 	begin
 		if rising_edge(clk_2Mhz) then
 			delay_buffer_chip(i) <= delay_buffer_chip(i-1);

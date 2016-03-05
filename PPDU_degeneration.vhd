@@ -15,9 +15,9 @@
 -- Revision: 
 -- Revision 0.01 - File Created
 -- Additional Comments: The PPDU structure is presented so that the leftmost field as written
---								in this standard shall be transmitted or received first. All  multiple
---								octet fields shall be transmitted or received least significant octet first,
---								and each octet shall be transmitted or received least significant bit (LSB) first
+--						in this standard shall be transmitted or received first. All  multiple
+--						octet fields shall be transmitted or received least significant octet first,
+--						and each octet shall be transmitted or received least significant bit (LSB) first
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -30,7 +30,6 @@ entity PPDU_degenerator is
 		  clk_250khz	: in STD_LOGIC;
 		  reset		: in STD_LOGIC;
 		  RX_enable : in std_logic;
---		  RX_enable_delayed : in std_logic;
 		  received_frame: out STD_LOGIC;
 		  check_frame: out STD_LOGIC -- if its 1 its ok, if its 0 is wrong
 		);
@@ -49,41 +48,44 @@ architecture BEHAV of PPDU_degenerator is
 	signal fr_len_counter: integer range 0 to 7;-- := 0;
 
 	signal PSDU_en	: std_logic; -- := '0';
-	--signal PSDU_counter: std_logic_vector(5 downto 0 );
 	signal PSDU_counter: integer range 0 to 127;
---	signal PSDU_temp	: std_logic_vector(39 downto 0);
 
 	signal fr_len_int : integer range 0 to 127;-- := 0;
 
 	-- for outputting FCS result
-	signal output_enable : std_logic;
+	signal output_enable : std_logic;-- := '0';
 
 	signal fcs_check : std_logic_vector(tth-1 downto 0);-- := (others => '1');
 
 begin
 
 	preSFD_temp <= temp_frame(39 downto 0);
---	
---	with preSFD_temp select
---		SFD_en <= '1' when x"00000000e5",
---				  '0' when others; -- here i could insert different values if others kind of packets
---					  
-	process(clk_250khz)
+	
+	CHK_FRAME: process(clk_250khz)
 	begin
 		if  rising_edge(clk_250khz) then
 			if reset = '1' or RX_enable = '0' then
 				PSDU_en <= '0';
 				SFD_en <= '0';
---				PSDU_temp <= x"0000000000";
 				PSDU_counter <= 0;
 				fr_len_counter <= 0;
 				fr_len_int <= 0;
 				fr_len_temp <= "00000000";
 				temp_frame <= temp_frame xor temp_frame;
+			
+				output_enable <= '0';
+				fcs_check <= x"FFFF";
+			
+			-- When you get them 40 bits of PSDU that means the whole packet arrived
+			-- then find fcs and tell me its ok to output.
+			elsif (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
+				fcs_check <= crc_func(temp_frame(39 downto 0));
+				output_enable <= '1';
+		
 			else
 				-- The SFD is a field indicating the end of the SHR 
 				-- (of a O-QPSK PHY) and the start of the packet data.
-				-- For the specific packet that I sent
+				-- For the specific packet that I sent is 000000000e5
 				if preSFD_temp = x"00000000e5" then
 					SFD_en <= '1';
 					fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
@@ -96,7 +98,6 @@ begin
 					if fr_len_counter = 8 then
 						PSDU_en <= '1';
 					
---						PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
 						PSDU_counter <= PSDU_counter + 1;
 
 						-- How many bits the PSDU is
@@ -105,68 +106,17 @@ begin
 				end if;
 				
 				if PSDU_en = '1' then
---					PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
 					PSDU_counter <= PSDU_counter + 1;
 				end if;
 
 				temp_frame <= temp_frame(m-2 downto 0) & ppdu_bit;
-	--			if (temp_frame(m-2 downto 0) & ppdu_bit) = (x"00000000e5") then
-	--				SFD_en <= '1'; why this doesnt work?
-	--			end if;
 			end if;
 		end if;
 	end process;
 
---	process(SFD_en, clk_250khz)
---	begin 
---		if rising_edge(clk_250khz) then
---			if SFD_en = '1' then
---				fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
---				fr_len_counter <= fr_len_counter + 1;
---				if fr_len_counter = 6 then -- eprepe na en 8
---					PSDU_en <= '1';
---				
---					PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
---					PSDU_counter <= PSDU_counter + 1;
---
---					-- How many bits the PSDU is
---					fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
---				end if;
---			end if;
---			if PSDU_en = '1' then
---				PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
---				PSDU_counter <= PSDU_counter + 1;
---			end if;
---		end if;
---	end process;
-	
---	process(PSDU_en, clk_250khz)
---	begin
---		if rising_edge(clk_250khz) then
---			if PSDU_en = '1' then
---				PSDU_temp <= PSDU_temp(38 downto 0) & ppdu_bit;
---				PSDU_counter <= PSDU_counter + 1;
---			end if;
---		end if;			
---	end process;
-	
-	process(PSDU_counter, clk_250khz)
-	begin
-		if rising_edge(clk_250khz) then
-			if reset = '1' or RX_enable = '0' then
-				output_enable <= '0';
-				fcs_check <= x"FFFF";
-			elsif (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
-			-- When you get them 40 bits of PSDU
-			-- that means the whole packet arrived
---				fcs_check <= crc_func(PSDU_temp);
-				fcs_check <= crc_func(temp_frame(39 downto 0));
-				output_enable <= '1';
-			end if;	
-		end if;
-	end process;
-
-	process(clk_250khz, reset)
+	-- When is ok to output a result, meaning we got the whole packet
+	-- check the fcs result and output accordingly.
+	OUT_RESULT: process(clk_250khz, reset, RX_enable)
 	begin
 		if reset = '1' or RX_enable = '0' then
 			check_frame <= '0';
@@ -179,21 +129,12 @@ begin
 				if fcs_check = "0000000000000000" then
 					-- OK
 					check_frame <= '1';
-			--		case RX_enable is
-			--			when '0' => check_frame <= '0';
-			--			when others => check_frame <= '1'; 
-			--		end case;
 				else
 					-- NOT OK
 					check_frame <= '0'; 
 				end if;
-			
---				if check_frame = '1' then
---					case RX_enable is
---						when '0' => check_frame <= '0';
---						when '1' => check_frame <= '1'; 
---					end case;
---				end if;
+			else
+				received_frame <= '0';
 			end if;
 
 		end if;

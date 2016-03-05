@@ -23,8 +23,7 @@ use IEEE.NUMERIC_STD.ALL;
 use work.receiver_pkg.all;
 
 entity Symbol2Bit is
-	port(	clk_62_5khz	: in STD_LOGIC;
-			clk_250khz	: in STD_LOGIC;
+	port(	clk_250khz	: in STD_LOGIC;
 			reset			: in STD_LOGIC;
 			RX_enable	: in STD_LOGIC;
 			
