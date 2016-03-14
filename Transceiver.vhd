@@ -23,6 +23,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity Transceiver is
     Port ( clk_250khz	: in  STD_LOGIC;
            clk_2Mhz		: in  STD_LOGIC;
+           clk_1Mhz		: in  STD_LOGIC;
 		   reset		: in  STD_LOGIC;
 		   TX_enable 	: in  STD_LOGIC;
 		   RX_enable	: in  STD_LOGIC;
@@ -47,14 +48,14 @@ architecture Behavioral of Transceiver is
 	signal delay_buffer_en : std_logic_vector(D_en downto 0);
 	signal RX_enable_delayed : std_logic;
 
-	component all_together is
-		port ( 	
-				clk_250khz	: in STD_LOGIC;
-				clk_2Mhz	: in STD_LOGIC;
-				TX_enable 	: in  STD_LOGIC;
-				reset		: in STD_LOGIC;
-				chip_out	: out std_logic
-				);
+	component Transmitter is
+		port ( clk_250khz : in std_logic;
+			   clk_2Mhz : in std_logic;
+			   clk_1Mhz : in std_logic;
+			   reset : in std_logic;   
+			   TX_enable : in std_logic;
+			   stream_out : out std_logic
+		   );
 	end component;
 	
 	component Receiver_TopModule is
@@ -72,10 +73,11 @@ architecture Behavioral of Transceiver is
 begin
 	data_bus <= bitIn_rx;
 
-	U_Transmitter: all_together port map( chip_out => bitOut_tx,
+	U_Transmitter: Transmitter port map ( stream_out => bitOut_tx,
 										  TX_enable => TX_enable,
 						 				  reset => reset,
 										  clk_250khz => clk_250khz,
+										  clk_1Mhz => clk_1Mhz,
 										  clk_2Mhz => clk_2Mhz
 									  );
 																  

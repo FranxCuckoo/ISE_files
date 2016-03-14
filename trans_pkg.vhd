@@ -41,22 +41,22 @@ package trans_pkg is
 	
 	-- Chip Values, mapping for the 2450 MHz band 
 	constant chipArray : chip_array :=	(	"11011001110000110101001000101110", -- 0
-														"11101101100111000011010100100010", -- 1
-														"00101110110110011100001101010010", -- 2
-														"00100010111011011001110000110101", -- 3
-														"01010010001011101101100111000011", -- 4
-														"00110101001000101110110110011100", -- 5
-														"11000011010100100010111011011001", -- 6
-														"10011100001101010010001011101101", -- 7
-														"10001100100101100000011101111011", -- 8
-														"10111000110010010110000001110111", -- 9
-														"01111011100011001001011000000111", -- 10
-														"01110111101110001100100101100000", -- 11
-														"00000111011110111000110010010110", -- 12
-														"01100000011101111011100011001001", -- 13
-														"10010110000001110111101110001100", -- 14
-														"11001001011000000111011110111000"); -- 15
-	
+											"11101101100111000011010100100010", -- 1
+											"00101110110110011100001101010010", -- 2
+											"00100010111011011001110000110101", -- 3
+											"01010010001011101101100111000011", -- 4
+											"00110101001000101110110110011100", -- 5
+											"11000011010100100010111011011001", -- 6
+											"10011100001101010010001011101101", -- 7
+											"10001100100101100000011101111011", -- 8
+											"10111000110010010110000001110111", -- 9
+											"01111011100011001001011000000111", -- 10
+											"01110111101110001100100101100000", -- 11
+											"00000111011110111000110010010110", -- 12
+											"01100000011101111011100011001001", -- 13
+											"10010110000001110111101110001100", -- 14
+											"11001001011000000111011110111000"); -- 15
+
 	--------------------------------------
 	-- Declare lengths constants
 	--------------------------------------
@@ -108,14 +108,14 @@ package body trans_pkg is
 		-- Basic elements of Frame Control
 		-- According to the IEEE Std 802.15.4-2011 figure 36 page 57
 		constant FrType	: std_logic_vector(2 downto 0) := "010";	-- 000 : Beacon
-		constant SecEn		: std_logic := '0';								--	001 : Data 
-		constant FrPend	: std_logic := '0';								-- 010 : ACK frame
-		constant AR 		: std_logic := '0';								-- 011 : MAC Command
-		constant PANID		: std_logic := '0';
-		constant Compr		: std_logic := '0';
-		constant Res		: std_logic_vector(1 downto 0) := "00";
+		constant SecEn	: std_logic := '0';							-- 001 : Data 
+		constant FrPend	: std_logic := '0';							-- 010 : ACK frame
+		constant AR 	: std_logic := '0'; -- no ack required		-- 011 : MAC Command
+		constant PANID	: std_logic := '0';
+		constant Compr	: std_logic := '0';
+		constant Res	: std_logic_vector(1 downto 0) := "00";
 		constant DesAddrMode : std_logic_vector(1 downto 0) := "00";
-		constant FrVer			: std_logic_vector(1 downto 0) := "00"; --01
+		constant FrVer		 : std_logic_vector(1 downto 0) := "00"; --01
 		constant SouAddrMode : std_logic_vector(1 downto 0) := "00";
 
 		-- Basic elements of MAC Frame
@@ -129,12 +129,12 @@ package body trans_pkg is
 		-- FCS: 0X1DAD
 		
 		-- Constructive elements
-		constant MHR : std_logic_vector(23 downto 0)	:= frame_ctrl & seq_num;
+		constant MHR : std_logic_vector(23 downto 0) := frame_ctrl & seq_num;
 		constant FCS : std_logic_vector(15 downto 0) := CRC_func(MHR); -- MFR field
 --															^
 --															|
 --															|											
-		--		Nesting of functions and procedures is allowed to any level of complexity, and recursion is
+--		Nesting of functions and procedures is allowed to any level of complexity, and recursion is
 --		also supported in the language. (Of course, if you expect to generate actual hardware from
 --		your VHDL descriptions using synthesis tools, then you will need to avoid writing recursive
 --		functions and procedures, as such descriptions are not synthesizable)
@@ -154,7 +154,7 @@ package body trans_pkg is
 	function PPDU_func(data : std_logic_vector) return std_logic_vector is
 		-- Basic elements
 		constant preamble 	: std_logic_vector(31 downto 0) := x"00000000";
-		constant SFD 			: std_logic_vector(7 downto 0):= "11100101";
+		constant SFD 		: std_logic_vector(7 downto 0):= "11100101";
 		constant reserved 	: std_logic := '0';
 		constant frame_length: std_logic_vector := std_logic_vector(to_unsigned((data'length/8), 7));
 

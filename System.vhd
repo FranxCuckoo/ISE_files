@@ -24,7 +24,8 @@ entity System is
     Port( TRX_request 	: in  STD_LOGIC_VECTOR (1 downto 0);
 		  clk_250khz	: in  STD_LOGIC;
 		  clk_2Mhz		: in  STD_LOGIC;
-		  reset 			: in  STD_LOGIC;
+		  clk_1Mhz		: in  STD_LOGIC;
+		  reset			: in  STD_LOGIC;
 		  Frame_Verif0	: out STD_LOGIC;
 		  Frame_Verif1	: out STD_LOGIC
   );
@@ -39,6 +40,7 @@ architecture Behavioral of System is
 	component Transceiver is
 		 Port(	 clk_250khz	: in  STD_LOGIC;
 				 clk_2Mhz		: in  STD_LOGIC;
+				 clk_1Mhz		: in  STD_LOGIC;
 				 bitIn_rx 		: in  STD_LOGIC;
 				 reset 			: in  STD_LOGIC;
 				 TX_enable 	: in  STD_LOGIC;
@@ -72,6 +74,7 @@ begin
 									RX_enable	=> RX0_en,
 									reset 		=> reset,
 									clk_250khz 	=> clk_250khz,
+									clk_1Mhz	=> clk_1Mhz,
 									clk_2Mhz	=> clk_2Mhz
 								);
 												  
@@ -83,6 +86,7 @@ begin
 									RX_enable	=> RX1_en,
 									reset 		=> reset,
 									clk_250khz 	=> clk_250khz,
+									clk_1Mhz	=> clk_1Mhz,
 									clk_2Mhz	=> clk_2Mhz
 								);
 												
