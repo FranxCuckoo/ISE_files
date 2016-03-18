@@ -27,17 +27,9 @@ package trans_pkg is
 	-- type for chip array values
 	type chip_array is array(0 to tth-1) of std_logic_vector(tt-1 downto 0);
 	
---	constant symbol_length : integer := 4; -- 4 bits
---	constant chip_length	  : integer := tt; -- 32 bits/chips every chip chunk
---	
---	constant m	: integer := 88; -- PPDU size frame
---	constant s	: integer := m/symbol_length; -- 22; number of symbols
---	constant c	: integer := s * tt; -- 704 for an ACK frame
---	
---	constant T_bit		: time := 4000 ns; -- 1/250e3 kbit/s
---	constant T_symbol : time := T_bit*4; --16000 ns; (T_bit * symbol_length) ns; -- 1/62.5e3 kbit/s = 16000 ns
---	constant T_chip 	: time := T_bit/8; -- 1/2000e3 kbit/s = 500 ns
---	constant T_fstClk : time := 5 ns; -- 1/200000e3
+	-- Integer and a real array
+	--TYPE int_vector is ARRAY(integer RANGE <>) OF integer range -128 to 127;
+	TYPE int32_vector is ARRAY(integer RANGE <>) OF integer;
 	
 	-- Chip Values, mapping for the 2450 MHz band 
 	constant chipArray : chip_array :=	(	"11011001110000110101001000101110", -- 0
@@ -56,7 +48,7 @@ package trans_pkg is
 											"01100000011101111011100011001001", -- 13
 											"10010110000001110111101110001100", -- 14
 											"11001001011000000111011110111000"); -- 15
-
+	
 	--------------------------------------
 	-- Declare lengths constants
 	--------------------------------------
@@ -96,6 +88,9 @@ package trans_pkg is
 	-- Reverse a vector
 	function reverse(x: in std_logic_vector) return std_logic_vector;
 
+	-- Convolution of two signals, arrays of integer
+	function conv(x,h: in int32_vector) return int32_vector;
+	
 end trans_pkg;
 
 package body trans_pkg is
@@ -108,14 +103,14 @@ package body trans_pkg is
 		-- Basic elements of Frame Control
 		-- According to the IEEE Std 802.15.4-2011 figure 36 page 57
 		constant FrType	: std_logic_vector(2 downto 0) := "010";	-- 000 : Beacon
-		constant SecEn	: std_logic := '0';							-- 001 : Data 
-		constant FrPend	: std_logic := '0';							-- 010 : ACK frame
-		constant AR 	: std_logic := '0'; -- no ack required		-- 011 : MAC Command
-		constant PANID	: std_logic := '0';
-		constant Compr	: std_logic := '0';
-		constant Res	: std_logic_vector(1 downto 0) := "00";
+		constant SecEn		: std_logic := '0';								--	001 : Data 
+		constant FrPend	: std_logic := '0';								-- 010 : ACK frame
+		constant AR 		: std_logic := '0';								-- 011 : MAC Command
+		constant PANID		: std_logic := '0';
+		constant Compr		: std_logic := '0';
+		constant Res		: std_logic_vector(1 downto 0) := "00";
 		constant DesAddrMode : std_logic_vector(1 downto 0) := "00";
-		constant FrVer		 : std_logic_vector(1 downto 0) := "00"; --01
+		constant FrVer			: std_logic_vector(1 downto 0) := "00"; --01
 		constant SouAddrMode : std_logic_vector(1 downto 0) := "00";
 
 		-- Basic elements of MAC Frame
@@ -129,12 +124,12 @@ package body trans_pkg is
 		-- FCS: 0X1DAD
 		
 		-- Constructive elements
-		constant MHR : std_logic_vector(23 downto 0) := frame_ctrl & seq_num;
+		constant MHR : std_logic_vector(23 downto 0)	:= frame_ctrl & seq_num;
 		constant FCS : std_logic_vector(15 downto 0) := CRC_func(MHR); -- MFR field
 --															^
 --															|
 --															|											
---		Nesting of functions and procedures is allowed to any level of complexity, and recursion is
+		--		Nesting of functions and procedures is allowed to any level of complexity, and recursion is
 --		also supported in the language. (Of course, if you expect to generate actual hardware from
 --		your VHDL descriptions using synthesis tools, then you will need to avoid writing recursive
 --		functions and procedures, as such descriptions are not synthesizable)
@@ -154,7 +149,7 @@ package body trans_pkg is
 	function PPDU_func(data : std_logic_vector) return std_logic_vector is
 		-- Basic elements
 		constant preamble 	: std_logic_vector(31 downto 0) := x"00000000";
-		constant SFD 		: std_logic_vector(7 downto 0):= "11100101";
+		constant SFD 			: std_logic_vector(7 downto 0):= "11100101";
 		constant reserved 	: std_logic := '0';
 		constant frame_length: std_logic_vector := std_logic_vector(to_unsigned((data'length/8), 7));
 
@@ -233,7 +228,35 @@ package body trans_pkg is
 		return result;
 	end reverse;
 	
+	-------------------
+	-- Convolusion
+	-------------------
+	function conv(x,h: in int32_vector) return int32_vector is
+		-- length of y is x'length + h'length - 1
+		variable sum : integer := 0;
+		variable temp : integer := 0;
+		variable y : int32_vector (0 to 38);
+	begin
+
+		for n in 0 to (y'length-1) loop
+			sum:=0;
+			for k in 0 to h'length-1 loop
+				temp := n-k;
+				if temp >= 0 then
+					-- we are assuming all singnals are positively indexed, negative indices deafult to 0.       
+					sum := sum + h(k)*x(temp);
+				end if;
+			end loop;
+			--output(n) := sum ;
+			y(n) := sum ;
+		end loop;
+
+		return y;			
+
+	end conv;
+	 
 	--=======================================================
 	-- end of detials help package
 	--=======================================================
 end trans_pkg;
+
