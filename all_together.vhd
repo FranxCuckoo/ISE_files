@@ -51,7 +51,7 @@ architecture BEHAV of all_together is
 	
 	signal temp_symbol : STD_LOGIC_VECTOR(3 DOWNTO 0);
 	signal i_symbol_out : integer range 0 to 15;
-	signal counter : integer range 0 to 3;
+	signal counter : integer range 0 to 4;
 
 	signal i_chip_out : std_logic;
 

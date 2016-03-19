@@ -37,7 +37,7 @@ end PPDU_degenerator;
 
 architecture BEHAV of PPDU_degenerator is
 	-- For saving the receiving frame
-	signal temp_frame	:	std_logic_vector(m-1 downto 0);-- := (others => '0');
+	signal temp_frame	:	std_logic_vector(39 downto 0);-- := (others => '0');
 
 	-- For getting the Preamble and SFD frame
 	signal preSFD_temp	:	std_logic_vector(39 downto 0);-- := (others => '0');
@@ -45,10 +45,10 @@ architecture BEHAV of PPDU_degenerator is
 	signal SFD_en	: std_logic;
 
 	signal fr_len_temp	: std_logic_vector(7 downto 0);
-	signal fr_len_counter: integer range 0 to 7;-- := 0;
+	signal fr_len_counter: integer range 0 to 8;-- := 0;
 
 	signal PSDU_en	: std_logic; -- := '0';
-	signal PSDU_counter: integer range 0 to 127;
+	signal PSDU_counter: integer range 0 to 40;
 
 	signal fr_len_int : integer range 0 to 127;-- := 0;
 
@@ -57,10 +57,19 @@ architecture BEHAV of PPDU_degenerator is
 
 	signal fcs_check : std_logic_vector(tth-1 downto 0);-- := (others => '1');
 
+	signal i_check_frame : std_logic;
+	signal i_received_frame : std_logic;
+
+	-- Keep signals in syhtesis. Do not optimize
+	attribute keep : boolean;
+	attribute keep of fr_len_temp : signal is true;
+	attribute keep of PSDU_counter : signal is true;
 begin
 
 	preSFD_temp <= temp_frame(39 downto 0);
 	
+	received_frame <= i_received_frame;
+	check_frame <= i_check_frame;
 	CHK_FRAME: process(clk_250khz)
 	begin
 		if  rising_edge(clk_250khz) then
@@ -71,13 +80,14 @@ begin
 				fr_len_counter <= 0;
 				fr_len_int <= 0;
 				fr_len_temp <= "00000000";
-				temp_frame <= temp_frame xor temp_frame;
+				temp_frame <= (others => '0'); --temp_frame xor temp_frame;
 			
 				output_enable <= '0';
 				fcs_check <= x"FFFF";
 			
 			-- When you get them 40 bits of PSDU that means the whole packet arrived
 			-- then find fcs and tell me its ok to output.
+			-- Next elsif ONLY true on the last bit!
 			elsif (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
 				fcs_check <= crc_func(temp_frame(39 downto 0));
 				output_enable <= '1';
@@ -89,6 +99,8 @@ begin
 				if preSFD_temp = x"00000000e5" then
 					SFD_en <= '1';
 					fr_len_temp <= fr_len_temp(6 downto 0) & ppdu_bit;
+					-- above was 6 downto 0 but i change it so the 
+					-- warning for the unused 7th bit to go away
 					fr_len_counter <= fr_len_counter + 1;
 				end if;
 							
@@ -101,6 +113,7 @@ begin
 						PSDU_counter <= PSDU_counter + 1;
 
 						-- How many bits the PSDU is
+						-- fr_len_int <= 40; -- 8*5=40
 						fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
 					end if;
 				end if;
@@ -109,7 +122,7 @@ begin
 					PSDU_counter <= PSDU_counter + 1;
 				end if;
 
-				temp_frame <= temp_frame(m-2 downto 0) & ppdu_bit;
+				temp_frame <= temp_frame(38 downto 0) & ppdu_bit;
 			end if;
 		end if;
 	end process;
@@ -119,22 +132,23 @@ begin
 	OUT_RESULT: process(clk_250khz, reset, RX_enable)
 	begin
 		if reset = '1' or RX_enable = '0' then
-			check_frame <= '0';
-			received_frame <= '0';
+			i_check_frame <= '0';
+			i_received_frame <= '0';
 		elsif rising_edge(clk_250khz) then
 			if output_enable = '1' then
 				-- Inform that we received a packet
-				received_frame <= '1';
+				i_received_frame <= '1';
 				-- Check if our received frame is correct
 				if fcs_check = "0000000000000000" then
 					-- OK
-					check_frame <= '1';
+					i_check_frame <= '1';
 				else
 					-- NOT OK
-					check_frame <= '0'; 
+					i_check_frame <= '0'; 
 				end if;
 			else
-				received_frame <= '0';
+				i_received_frame <= '0';
+				i_check_frame <= '0';
 			end if;
 
 		end if;
