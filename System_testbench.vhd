@@ -42,9 +42,7 @@ ARCHITECTURE behavior OF System_testbench IS
     COMPONENT System
     PORT(
          TRX_request : IN  std_logic_vector(1 downto 0);
-         clk_250khz : IN  std_logic;
-         clk_2Mhz : IN  std_logic;
-         clk_1Mhz : IN  std_logic;
+		 clk : in std_logic;
          reset : IN  std_logic;
          Frame_Verif0 : OUT  std_logic;
          Frame_Verif1 : OUT  std_logic
@@ -54,9 +52,7 @@ ARCHITECTURE behavior OF System_testbench IS
 
    --Inputs
    signal TRX_request : std_logic_vector(1 downto 0) := (others => '0');
-   signal clk_250khz : std_logic := '0';
-   signal clk_2Mhz : std_logic := '0';
-   signal clk_1Mhz : std_logic := '0';
+   signal clk : std_logic := '0';
    signal reset : std_logic := '0';
 
  	--Outputs
@@ -64,47 +60,57 @@ ARCHITECTURE behavior OF System_testbench IS
    signal Frame_Verif1 : std_logic;
 
    -- Clock period definitions
-	constant clk_2Mhz_period : time := 0.5 us;
-	constant clk_1Mhz_period : time := 1 us;
-   constant clk_250khz_period : time := 4 us;
+	constant clk_period : time := 0.01 us;
+--	constant clk_2Mhz_period : time := 0.5 us;
+--	constant clk_1Mhz_period : time := 1 us;
+--   constant clk_250khz_period : time := 4 us;
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: System PORT MAP (
           TRX_request => TRX_request,
-          clk_250khz => clk_250khz,
-          clk_2Mhz => clk_2Mhz,
-          clk_1Mhz => clk_1Mhz,
+--          clk_250khz => clk_250khz,
+--          clk_2Mhz => clk_2Mhz,
+--          clk_1Mhz => clk_1Mhz,
+		  clk => clk,
           reset => reset,
           Frame_Verif0 => Frame_Verif0,
           Frame_Verif1 => Frame_Verif1
         );
 
    -- Clock process definitions
-   clk_250khz_process :process
+   clk_process :process
    begin
-		clk_250khz <= '1';
-		wait for clk_250khz_period/2;
-		clk_250khz <= '0';
-		wait for clk_250khz_period/2;
+		clk <= '1';
+		wait for clk_period/2;
+		clk <= '0';
+		wait for clk_period/2;
    end process;
- 
-   clk_2Mhz_process :process
-   begin
-		clk_2Mhz <= '1';
-		wait for clk_2Mhz_period/2;
-		clk_2Mhz <= '0';
-		wait for clk_2Mhz_period/2;
-   end process;
-	
-	clk_1Mhz_process :process
-   begin
-		clk_1Mhz <= '1';
-		wait for clk_1Mhz_period/2;
-		clk_1Mhz <= '0';
-		wait for clk_1Mhz_period/2;
-   end process;
+
+--   clk_250khz_process :process
+--   begin
+--		clk_250khz <= '1';
+--		wait for clk_250khz_period/2;
+--		clk_250khz <= '0';
+--		wait for clk_250khz_period/2;
+--   end process;
+-- 
+--   clk_2Mhz_process :process
+--   begin
+--		clk_2Mhz <= '1';
+--		wait for clk_2Mhz_period/2;
+--		clk_2Mhz <= '0';
+--		wait for clk_2Mhz_period/2;
+--   end process;
+--	
+--	clk_1Mhz_process :process
+--   begin
+--		clk_1Mhz <= '1';
+--		wait for clk_1Mhz_period/2;
+--		clk_1Mhz <= '0';
+--		wait for clk_1Mhz_period/2;
+--   end process;
  
 
    -- Stimulus process
