@@ -114,14 +114,14 @@ begin
 --		elsif rising_edge(clk) then   -- rising clock edge
 		if rising_edge(clk) then   -- rising clock edge
 			if prescaler250 = 100000000/500000 then -- 250000 * 2 half period
-				prescaler250 <= 0;	-- resetting to 0
+				prescaler250 <= 1;	-- resetting to 0
 				clk_250Khz  <= not clk_250Khz;
 			else
 				prescaler250 <= prescaler250 + 1;
 			end if;
 
 			if prescaler2 = 100000000/4000000 then -- 2000000*2 half period => 
-				prescaler2 <= 0;
+				prescaler2 <= 1;
 				clk_2Mhz  <= not clk_2Mhz;
 			else
 				prescaler2 <= prescaler2 + 1;
