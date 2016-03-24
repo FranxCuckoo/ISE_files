@@ -23,11 +23,11 @@ use work.receiver_pkg.all;
 
 entity Chip2Symbol is
 	port( BitChip	: in STD_LOGIC;
-			RX_enable  	: in  STD_LOGIC; --_VECTOR (1 downto 0);
-			symbol_out	: out integer range 0 to 15;
-			reset	:	in STD_LOGIC;
-			clk_2Mhz	: in STD_LOGIC
-			);
+	      RX_enable	: in  STD_LOGIC; --_VECTOR (1 downto 0);
+	      symbol_out: out integer range 0 to 15;
+	  	  reset		: in STD_LOGIC;
+	      clk_2Mhz	: in STD_LOGIC
+		);
 end Chip2Symbol;
 
 architecture Behavioral of Chip2Symbol is
@@ -60,6 +60,9 @@ begin
 					-- Count to 31
 					if chip_counter = tt-1 then
 						chip_counter <= 0;
+					elsif chip_counter = 0 then
+						chip_counter <=  chip_counter + 1;
+						i_symbol_out <= get_symbol(temp_chip);
 					else
 						chip_counter <=  chip_counter + 1;
 					end if;
@@ -69,22 +72,20 @@ begin
 
 		symbol_out <= i_symbol_out;
 
-		OUTPUT_SYMBOL: process(temp_chip, chip_counter, i_symbol_out)
-	   	--clk_62_5khz, was in the sensitivity list removed on 5/03 cause ise said it was not used.
-		begin
-			-- Every 32 chips you take translate them in a symbol
-			-- when counter = 0 cause when in use this module in the next level it has a ff delay
+--		OUTPUT_SYMBOL: process(clk_2Mhz, temp_chip, chip_counter, i_symbol_out)
+--	   	--clk_62_5khz, was in the sensitivity list removed on 5/03 cause ise said it was not used.
+--		begin
+--			-- Every 32 chips you take translate them in a symbol
+--			-- when counter = 0 cause when in use this module in the next level it has a ff delay
 --			if chip_counter = 0 then -- and clk_62_5khz = '1'
 --				i_symbol_out <= get_symbol(temp_chip);
---			else
---				i_symbol_out <= i_symbol_out;
 --			end if;
-
-			case chip_counter is
-				when 0 => i_symbol_out <= get_symbol(temp_chip);
-				when others => i_symbol_out <= i_symbol_out;
-			end case;
-
-		end process;
+--
+----			case chip_counter is
+----				when 0 => i_symbol_out <= get_symbol(temp_chip);
+----				when others => i_symbol_out <= i_symbol_out;
+----			end case;
+--
+--		end process;
 end Behavioral;
 
