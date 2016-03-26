@@ -50,7 +50,7 @@ architecture BEHAV of PPDU_degenerator is
 	signal PSDU_en	: std_logic; -- := '0';
 	signal PSDU_counter: integer range 0 to 40;
 
-	signal fr_len_int : std_logic_vector(7 downto 0); --integer range 0 to 127;-- := 0;
+	signal fr_len_int : integer range 0 to 127;-- := 0;
 
 	-- for outputting FCS result
 	signal output_enable : std_logic;-- := '0';
@@ -78,7 +78,7 @@ begin
 				SFD_en <= '0';
 				PSDU_counter <= 0;
 				fr_len_counter <= 0;
-				fr_len_int <= (others => '0'); --0;
+				fr_len_int <= 0;
 				fr_len_temp <= "00000000";
 				temp_frame <= (others => '0'); --temp_frame xor temp_frame;
 			
@@ -88,7 +88,7 @@ begin
 			-- When you get them 40 bits of PSDU that means the whole packet arrived
 			-- then find fcs and tell me its ok to output.
 			-- Next elsif ONLY true on the last bit!
-			elsif (PSDU_counter = to_integer(unsigned(fr_len_int))) and (PSDU_en = '1') then
+			elsif (PSDU_counter = fr_len_int) and (PSDU_en = '1') then
 				fcs_check <= crc_func(temp_frame(39 downto 0));
 				output_enable <= '1';
 		
@@ -114,7 +114,7 @@ begin
 
 						-- How many bits the PSDU is
 						-- fr_len_int <= 40; -- 8*5=40
-						fr_len_int <= std_logic_vector(to_unsigned(8*(to_integer(unsigned(fr_len_temp(7 downto 1)))), fr_len_int'length));
+						fr_len_int <= 8*(to_integer(unsigned(fr_len_temp(7 downto 1))));
 					end if;
 				end if;
 				
